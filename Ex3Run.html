@@ -61,16 +61,16 @@
       gl = canvas_ds.getContext('webgl');
 	  
       //load external resources
-      let vertexShaderSource = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG3-Rotate-3D-Object/main/vertex.glsl").then(e => e.text());
-      let fragmentShaderSource = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG3-Rotate-3D-Object/main/fragment.glsl").then(e => e.text());
+      let vertexShaderSource = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG-Ex3/main/vertex.glsl").then(e => e.text());
+      let fragmentShaderSource = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG-Ex3/main/fragment.glsl").then(e => e.text());
       // Link the two shaders into a program
       program = makeProgram(gl, vertexShaderSource, fragmentShaderSource);
       gl.useProgram(program);
       gl.enable(gl.DEPTH_TEST);
 
       //Load byte data into variables
-	  //From: https://sketchfab.com/3d-models/paris-f7ce025e7d94488592ed7bc3ae8e7499
-      let data = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG3-Rotate-3D-Object/main/paris.bin").then(e =>  e.arrayBuffer());
+      //From: https://sketchfab.com/3d-models/paris-f7ce025e7d94488592ed7bc3ae8e7499
+      let data = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG-Ex3/main/paris.bin").then(e =>  e.arrayBuffer());
       let positions = data.slice(0, 3872172);
       let colors = data.slice(3872172, 6453620);
       let indices = data.slice(6453620);
