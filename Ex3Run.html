@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Rotate 3D Object<Canvas></Canvas></title>
+  <script type="application/javascript" src="./helper.js"></script>
+</head>
+
+<body>
+
+  <h3>n-c0de-r</h3>
+  <canvas id="ds_draw_here"></canvas>
+
+  <table>
+    <tr>
+      <td>Left Arrow to pan left</td>
+      <td>A for rotate left</td>
+      <td>R for reset</td>
+    </tr>
+    <tr>
+      <td>Up Arrow to pan up</td>
+      <td>S for rotate up</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Right Arrow to pan right</td>
+      <td>D for rotate right</td>
+      <td>Timer til auto reset:</td>
+    </tr>
+    <tr>
+      <td>Down Arrow to pan down</td>
+      <td>W for rotate down</td>
+      <td id="TimerSeconds">0s</td>
+    </tr>
+    <tr>
+      <td>Plus Key pan in</td>
+      <td>E for rotate clockwise</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>Minus Key pan out</td>
+      <td>Q for rotate counter-cockwise</td>
+      <td></td>
+    </tr>
+  </table>
+      
+  <script>
+    //Declare all Variables here that need to be visible from init() AND render()
+    var gl, program, length, timer, timerID, inc, uniLocationX, uniLocationY, uniLocationZ,
+    x_angle, y_angle, Z_angle, uniPosX, uniPosY, uniPosZ, posX, posY, posZ;
+
+    init();
+
+    async function init() {
+      //Put your one time initialisation javascript here
+      let canvas_ds = document.getElementById('ds_draw_here');
+       // Find the smallest side, depending on device
+      canvas_ds.width = Math.min(window.innerWidth/2, window.innerHeight/2);
+      canvas_ds.height = canvas_ds.width;
+
+      gl = canvas_ds.getContext('webgl');
+	  
+      //load external resources
+      let vertexShaderSource = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG3-Rotate-3D-Object/main/vertex.glsl").then(e => e.text());
+      let fragmentShaderSource = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG3-Rotate-3D-Object/main/fragment.glsl").then(e => e.text());
+      // Link the two shaders into a program
+      program = makeProgram(gl, vertexShaderSource, fragmentShaderSource);
+      gl.useProgram(program);
+      gl.enable(gl.DEPTH_TEST);
+
+      //Load byte data into variables
+	  //From: https://sketchfab.com/3d-models/paris-f7ce025e7d94488592ed7bc3ae8e7499
+      let data = await fetch("https://raw.githubusercontent.com/n-c0de-r/CG3-Rotate-3D-Object/main/paris.bin").then(e =>  e.arrayBuffer());
+      let positions = data.slice(0, 3872172);
+      let colors = data.slice(3872172, 6453620);
+      let indices = data.slice(6453620);
+
+      // HERE we need to initialize all the data for the GPU
+      fillBuffer(gl, positions);
+      pointAttributes(gl, program, "a_position", 3);
+
+      fillBuffer(gl, colors);
+      pointAttributes(gl, program, "a_col", 4, gl.UNSIGNED_SHORT, true);
+
+      var ext = gl.getExtension('OES_element_index_uint');
+      fillBuffer(gl, indices, gl.ELEMENT_ARRAY_BUFFER);
+
+      //4 bytes per index
+      length = indices.byteLength/4;
+
+      timer = 0;
+      x_angle = 0;
+      y_angle = 0;
+      z_angle = 0;
+      posX = 0;
+      posY = 0;
+      posZ = 0;
+      inc = 1;
+      window.requestAnimationFrame(render); //Start rendering when everything is LOADED, not earlier
+    }
+
+    //do not write requestAnimationFrame(..) HERE, when loading data with async functions
+    function render(time) {
+      document.onkeydown = function() {buttonPressed()};
+
+      //Put your repeatedly drawing code javascript here
+      gl.clearColor(0.0, 0.0, 0.0, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+
+      uniLocationX = gl.getUniformLocation(program, "u_Xangle");
+      gl.uniform1f(uniLocationX, x_angle);
+      uniLocationY = gl.getUniformLocation(program, "u_Yangle");
+      gl.uniform1f(uniLocationY, y_angle);
+      uniLocationZ = gl.getUniformLocation(program, "u_Zangle");
+      gl.uniform1f(uniLocationZ, z_angle);
+
+      uniPosX = gl.getUniformLocation(program, "tX");
+      gl.uniform1f(uniPosX, posX);
+      uniPosY = gl.getUniformLocation(program, "tY");
+      gl.uniform1f(uniPosY, posY);
+      uniPosZ = gl.getUniformLocation(program, "tZ");
+      gl.uniform1f(uniPosZ, posZ);
+
+      if (timer == 0) {
+        if (y_angle == 0 || y_angle == 360) {
+          inc = -inc;
+        }
+        y_angle = (y_angle+inc)%361;
+    } 
+
+      //draw something with gl.drawArrays()
+      let primitiveType = gl.TRIANGLES;
+      let skip = 0;
+      let count = length;
+
+      gl.drawElements(primitiveType, count, gl.UNSIGNED_INT, skip);
+
+      window.requestAnimationFrame(render); //render forever
+    }
+  </script>
+</body>
+
+</html>
